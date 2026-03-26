@@ -32,7 +32,7 @@
 
 <div class="min-h-screen flex">
   <!-- Brand panel -->
-  <div class="hidden lg:flex lg:w-2/5 bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-700 flex-col items-center justify-center p-12 text-white">
+  <div class="hidden lg:flex lg:w-2/5 bg-gradient-to-br from-green-700 via-green-800 to-green-900 flex-col items-center justify-center p-12 text-white">
     <div class="mb-8">
       <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 opacity-90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
@@ -61,7 +61,7 @@
     <div class="w-full max-w-sm">
       <!-- Mobile logo -->
       <div class="flex items-center gap-2 mb-8 lg:hidden">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-green-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
         </svg>
         <span class="text-xl font-bold">Buku</span>
@@ -88,7 +88,7 @@
             type="text"
             id="name"
             bind:value={name}
-            class="input input-bordered focus:input-primary"
+            class="input input-bordered focus:input-primary w-full"
             placeholder="Your full name"
             autocomplete="name"
             required
@@ -103,7 +103,7 @@
             type="text"
             id="username"
             bind:value={username}
-            class="input input-bordered focus:input-primary"
+            class="input input-bordered focus:input-primary w-full"
             placeholder="Choose a username"
             autocomplete="username"
             required
@@ -118,14 +118,14 @@
             type="password"
             id="password"
             bind:value={password}
-            class="input input-bordered focus:input-primary"
+            class="input input-bordered focus:input-primary w-full"
             placeholder="Choose a password"
             autocomplete="new-password"
             required
           />
         </label>
 
-        <button type="submit" class="btn btn-primary mt-2" disabled={loading}>
+        <button type="submit" class="btn btn-primary mt-2 w-full" disabled={loading}>
           {#if loading}
             <span class="loading loading-spinner loading-sm"></span>
             Creating account…

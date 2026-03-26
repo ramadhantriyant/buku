@@ -7,6 +7,7 @@
   import Sidebar from './components/Sidebar.svelte';
   import BookmarkForm from './components/BookmarkForm.svelte';
   import BookmarkList from './components/BookmarkList.svelte';
+  import ChangePassword from './components/ChangePassword.svelte';
 
   let user = $state<User | null>(null);
   let view = $state<'login' | 'register' | 'dashboard'>('login');
@@ -17,6 +18,7 @@
   let editingUrl = $state<Bookmark | null>(null);
   let loading = $state(true);
   let error = $state('');
+  let showChangePassword = $state(false);
 
   onMount(async () => {
     const token = api.getToken();
@@ -107,12 +109,12 @@
 {#if loading}
   <div class="min-h-screen flex items-center justify-center bg-base-200">
     <div class="flex flex-col items-center gap-3">
-      <div class="w-10 h-10 rounded-xl bg-violet-600 flex items-center justify-center">
+      <div class="w-10 h-10 rounded-xl bg-green-700 flex items-center justify-center">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
         </svg>
       </div>
-      <span class="loading loading-dots loading-sm text-violet-600"></span>
+      <span class="loading loading-dots loading-sm text-green-700"></span>
     </div>
   </div>
 {:else if view === 'login'}
@@ -147,12 +149,16 @@
 
         <div class="flex items-center gap-3">
           {#if user}
-            <div class="flex items-center gap-2.5">
-              <div class="w-8 h-8 rounded-full bg-violet-600 flex items-center justify-center text-white text-xs font-semibold select-none">
+            <button
+              class="flex items-center gap-2.5 rounded-lg px-2 py-1 hover:bg-base-200 transition-colors"
+              onclick={() => showChangePassword = true}
+              title="Change password"
+            >
+              <div class="w-8 h-8 rounded-full bg-green-700 flex items-center justify-center text-white text-xs font-semibold select-none">
                 {userInitials(user)}
               </div>
               <span class="text-sm text-base-content/70 hidden sm:block">{user.name}</span>
-            </div>
+            </button>
           {/if}
           <button class="btn btn-ghost btn-sm gap-1.5 text-base-content/60 hover:text-error" onclick={handleLogout}>
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -191,4 +197,8 @@
       </main>
     </div>
   </div>
+
+  {#if showChangePassword}
+    <ChangePassword onclose={() => showChangePassword = false} />
+  {/if}
 {/if}

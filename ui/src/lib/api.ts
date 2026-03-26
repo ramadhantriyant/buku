@@ -40,6 +40,15 @@ class ApiService {
       return null;
     }
 
+    const contentType = response.headers.get('content-type') ?? '';
+    if (!contentType.includes('application/json')) {
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || 'An error occurred');
+      }
+      return null;
+    }
+
     const data = await response.json();
 
     if (!response.ok) {
@@ -74,6 +83,13 @@ class ApiService {
   // Profile
   async getProfile() {
     return this.request('/profile');
+  }
+
+  async changePassword(currentPassword: string, newPassword: string) {
+    return this.request('/profile/password', {
+      method: 'PUT',
+      body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
+    });
   }
 
   // Categories

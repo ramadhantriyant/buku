@@ -468,6 +468,66 @@ func (h *Handler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+func (h *Handler) ChangePassword(w http.ResponseWriter, r *http.Request) {
+	userID, ok := middlewares.GetUserIDFromContext(r.Context())
+	if !ok {
+		utils.WriteJSONError(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	var req models.ChangePasswordRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		utils.WriteJSONError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	if strings.TrimSpace(req.CurrentPassword) == "" {
+		utils.WriteJSONError(w, http.StatusBadRequest, "Current password is required")
+		return
+	}
+
+	if strings.TrimSpace(req.NewPassword) == "" {
+		utils.WriteJSONError(w, http.StatusBadRequest, "New password is required")
+		return
+	}
+
+	if len(req.NewPassword) < 6 {
+		utils.WriteJSONError(w, http.StatusBadRequest, "New password must be at least 6 characters")
+		return
+	}
+
+	user, err := h.config.Queries.GetUserByID(r.Context(), userID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			utils.WriteJSONError(w, http.StatusNotFound, "User not found")
+			return
+		}
+		utils.WriteJSONError(w, http.StatusInternalServerError, "Failed to get user")
+		return
+	}
+
+	if !checkPasswordHash(req.CurrentPassword, user.Password) {
+		utils.WriteJSONError(w, http.StatusUnauthorized, "Current password is incorrect")
+		return
+	}
+
+	hashedPassword, err := hashPassword(req.NewPassword)
+	if err != nil {
+		utils.WriteJSONError(w, http.StatusInternalServerError, "Failed to process password")
+		return
+	}
+
+	if err := h.config.Queries.UpdateUserPassword(r.Context(), database.UpdateUserPasswordParams{
+		Password: hashedPassword,
+		ID:       userID,
+	}); err != nil {
+		utils.WriteJSONError(w, http.StatusInternalServerError, "Failed to update password")
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func (h *Handler) AdminDashboard(w http.ResponseWriter, r *http.Request) {
 	response := map[string]interface{}{
 		"message": "Admin dashboard - admin access granted",

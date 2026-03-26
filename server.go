@@ -50,6 +50,7 @@ func createServer(config *models.Config, port string) *http.Server {
 
 	// Profile
 	mux.HandleFunc("GET /api/profile", authMiddleware(h.GetProfile))
+	mux.HandleFunc("PUT /api/profile/password", authMiddleware(h.ChangePassword))
 
 	// Categories (protected)
 	mux.HandleFunc("GET /api/category", authMiddleware(h.ListCategory))
