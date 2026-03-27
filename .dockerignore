@@ -1,0 +1,47 @@
+# Go build artifacts
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+buku
+
+# Test binary
+*.test
+
+# Output of the go coverage tool
+*.cover
+*.cov
+
+# Dependency directories
+vendor/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# UI
+dist/
+node_modules/
+
+# Docker
+Dockerfile*
+.dockerignore
+
+# Misc
+README.md
+LICENSE
+*.md
