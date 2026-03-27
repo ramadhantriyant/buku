@@ -12,10 +12,11 @@ Buku (meaning "book" in Indonesian/Malay) is a full-featured bookmark manager th
 - **User Authentication**: Secure JWT-based authentication with refresh tokens
 - **Password Reset**: Token-based password reset functionality
 - **Admin Role**: First registered user automatically becomes admin
-- **Categories**: Organize bookmarks into custom categories
-- **Bookmark Management**: Save URLs with descriptions and organize by category
-- **Search**: Full-text search across URLs and descriptions
+- **Categories**: Organize bookmarks into custom categories with color coding
+- **Bookmark Management**: Save URLs with titles, descriptions, pin important items, and optional categorization
+- **Search**: Full-text search across URLs, titles, and descriptions
 - **Input Sanitization**: XSS protection with HTML sanitization
+- **Docker Support**: Multi-stage Dockerfile with scratch base image for minimal footprint
 
 ### Security Features
 - **Argon2id**: Modern password hashing algorithm
@@ -103,6 +104,8 @@ buku/
 │   │       └── BookmarkList.svelte
 │   ├── dist/                  # Built files (embedded in Go binary)
 │   └── package.json
+├── Dockerfile                 # Multi-stage Docker build
+├── .dockerignore             # Docker ignore rules
 └── data/
     └── buku.db                # SQLite database
 ```
@@ -262,7 +265,8 @@ Content-Type: application/json
 
 {
   "name": "Technology",
-  "description": "Tech-related bookmarks"
+  "description": "Tech-related bookmarks",
+  "color": "#3b82f6"
 }
 ```
 
@@ -274,7 +278,8 @@ Content-Type: application/json
 
 {
   "name": "Technology & Programming",
-  "description": "Updated description"
+  "description": "Updated description",
+  "color": "#10b981"
 }
 ```
 
@@ -305,7 +310,9 @@ Content-Type: application/json
 
 {
   "url": "https://github.com",
+  "title": "GitHub",
   "description": "GitHub - Code repository",
+  "is_pinned": true,
   "category_id": 1
 }
 ```
@@ -318,7 +325,9 @@ Content-Type: application/json
 
 {
   "url": "https://github.com",
+  "title": "GitHub Home",
   "description": "Updated description",
+  "is_pinned": false,
   "category_id": 1
 }
 ```
@@ -351,10 +360,10 @@ Authorization: Bearer <token>
 | Column | Type | Description |
 |--------|------|-------------|
 | id | INTEGER | Primary key |
-| username | VARCHAR(255) | Unique username |
-| password | VARCHAR(255) | Argon2id hashed password |
-| name | VARCHAR(255) | Display name |
-| is_admin | INTEGER | Admin flag (0/1) |
+| username | TEXT | Unique username |
+| password | TEXT | Argon2id hashed password |
+| name | TEXT | Display name |
+| is_admin | BOOLEAN | Admin flag |
 | created_at | DATETIME | Creation timestamp |
 | updated_at | DATETIME | Last update timestamp |
 
@@ -362,8 +371,9 @@ Authorization: Bearer <token>
 | Column | Type | Description |
 |--------|------|-------------|
 | id | INTEGER | Primary key |
-| name | VARCHAR(255) | Category name |
+| name | TEXT | Category name |
 | description | TEXT | Category description |
+| color | TEXT | Optional hex color code for visual identification |
 | user_id | INTEGER | Owner reference |
 | created_at | DATETIME | Creation timestamp |
 | updated_at | DATETIME | Last update timestamp |
@@ -372,9 +382,11 @@ Authorization: Bearer <token>
 | Column | Type | Description |
 |--------|------|-------------|
 | id | INTEGER | Primary key |
-| url | VARCHAR(100) | Bookmark URL |
+| url | TEXT | Bookmark URL |
+| title | TEXT | Optional bookmark title |
 | description | TEXT | Bookmark description |
-| category_id | INTEGER | Category reference |
+| is_pinned | BOOLEAN | Pin status for important bookmarks |
+| category_id | INTEGER | Optional category reference (nullable) |
 | user_id | INTEGER | Owner reference |
 | created_at | DATETIME | Creation timestamp |
 | updated_at | DATETIME | Last update timestamp |
@@ -384,9 +396,9 @@ Authorization: Bearer <token>
 |--------|------|-------------|
 | id | INTEGER | Primary key |
 | user_id | INTEGER | User reference |
-| token_hash | VARCHAR(255) | Token hash |
+| token_hash | TEXT | Token hash |
 | expires_at | DATETIME | Expiration timestamp |
-| revoked | INTEGER | Revocation flag |
+| revoked | BOOLEAN | Revocation flag |
 | created_at | DATETIME | Creation timestamp |
 
 ### Password Reset Tokens
@@ -394,7 +406,7 @@ Authorization: Bearer <token>
 |--------|------|-------------|
 | id | INTEGER | Primary key |
 | user_id | INTEGER | User reference |
-| token_hash | VARCHAR(255) | Token hash |
+| token_hash | TEXT | Token hash |
 | expires_at | DATETIME | Expiration timestamp (1 hour) |
 | used | BOOLEAN | Usage flag |
 | created_at | DATETIME | Creation timestamp |
@@ -421,9 +433,10 @@ Authorization: Bearer <token>
 The frontend includes:
 
 - **Login/Register Forms**: Authentication with validation
+- **Change Password**: Password change functionality for logged-in users
 - **Sidebar**: Category navigation with search
-- **Bookmark Form**: Add and edit bookmarks
-- **Bookmark List**: Display bookmarks with edit/delete actions
+- **Bookmark Form**: Add and edit bookmarks with title, pin, and optional category
+- **Bookmark List**: Display bookmarks with edit/delete actions, pin indicators, and category badges
 - **Responsive Design**: Works on desktop and mobile
 
 ## Testing
@@ -454,24 +467,28 @@ curl "http://localhost:8080/api/url?search=github" \
 
 ## Deployment
 
-### Docker (Optional)
+### Docker
 
-```dockerfile
-# Dockerfile
-FROM golang:1.26-alpine AS builder
-WORKDIR /app
-COPY . .
-RUN cd ui && npm install && npm run build
-RUN go build -o buku .
+The project includes a multi-stage Dockerfile that builds a minimal scratch-based image:
 
-FROM alpine:latest
-RUN apk --no-cache add ca-certificates
-WORKDIR /root/
-COPY --from=builder /app/buku .
-ENV JWT_SECRET=${JWT_SECRET}
-EXPOSE 8080
-CMD ["./buku"]
+```bash
+# Build the image
+docker build -t buku .
+
+# Run with persistent data volume
+docker run -p 8080:8080 \
+  -e JWT_SECRET="your-secret-key-minimum-32-characters-long" \
+  -v buku-data:/app/data \
+  buku
 ```
+
+**Dockerfile highlights:**
+- Multi-stage build with Bun for UI and Go for backend
+- Static binary compilation (CGO_ENABLED=0)
+- Scratch base image for minimal attack surface
+- Non-root user (65534) for security
+- CA certificates included for HTTPS support
+- Data volume at `/app/data` for SQLite database persistence
 
 ### Production Build
 
