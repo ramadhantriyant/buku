@@ -1,6 +1,6 @@
 -- name: CreateCategory :one
-INSERT INTO categories (name, description, user_id)
-VALUES (?, ?, ?)
+INSERT INTO categories (name, description, color, user_id)
+VALUES (?, ?, ?, ?)
 RETURNING *;
 
 -- name: GetCategoryByID :one
@@ -14,7 +14,7 @@ ORDER BY name ASC;
 
 -- name: UpdateCategory :one
 UPDATE categories
-SET name = ?, description = ?, updated_at = CURRENT_TIMESTAMP
+SET name = ?, description = ?, color = ?, updated_at = CURRENT_TIMESTAMP
 WHERE id = ? AND user_id = ?
 RETURNING *;
 

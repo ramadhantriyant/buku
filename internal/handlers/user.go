@@ -87,10 +87,10 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		Username: req.Username,
 		Password: hashedPassword,
 		Name:     req.Name,
-		IsAdmin:  0,
+		IsAdmin:  false,
 	}
 	if isFirstUser {
-		params.IsAdmin = 1
+		params.IsAdmin = true
 	}
 
 	user, err := h.config.Queries.CreateUser(r.Context(), params)
@@ -103,7 +103,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	accessToken, err := middlewares.GenerateToken(user.ID, h.config.JWTSecret, "access", accessTokenExpiry, user.IsAdmin == 1)
+	accessToken, err := middlewares.GenerateToken(user.ID, h.config.JWTSecret, "access", accessTokenExpiry, user.IsAdmin)
 	if err != nil {
 		utils.WriteJSONError(w, http.StatusInternalServerError, "Failed to generate access token")
 		return
@@ -169,7 +169,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	accessToken, err := middlewares.GenerateToken(user.ID, h.config.JWTSecret, "access", accessTokenExpiry, user.IsAdmin == 1)
+	accessToken, err := middlewares.GenerateToken(user.ID, h.config.JWTSecret, "access", accessTokenExpiry, user.IsAdmin)
 	if err != nil {
 		utils.WriteJSONError(w, http.StatusInternalServerError, "Failed to generate access token")
 		return
@@ -236,7 +236,7 @@ func (h *Handler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	accessToken, err := middlewares.GenerateToken(user.ID, h.config.JWTSecret, "access", accessTokenExpiry, user.IsAdmin == 1)
+	accessToken, err := middlewares.GenerateToken(user.ID, h.config.JWTSecret, "access", accessTokenExpiry, user.IsAdmin)
 	if err != nil {
 		utils.WriteJSONError(w, http.StatusInternalServerError, "Failed to generate access token")
 		return

@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Go Backend",
+      "runtimeExecutable": "env",
+      "runtimeArgs": ["JWT_SECRET=dev-secret", "go", "run", "."],
+      "port": 8080
+    },
+    {
+      "name": "Svelte Frontend",
+      "runtimeExecutable": "bun",
+      "runtimeArgs": ["--cwd", "ui", "run", "dev"],
+      "port": 5173
+    }
+  ]
+}

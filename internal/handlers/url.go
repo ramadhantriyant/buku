@@ -33,6 +33,7 @@ func (h *Handler) ListURL(w http.ResponseWriter, r *http.Request) {
 		params := database.SearchURLsParams{
 			UserID:      userID,
 			Url:         searchPattern,
+			Title:       &searchPattern,
 			Description: &searchPattern,
 		}
 		urls, err = h.config.Queries.SearchURLs(r.Context(), params)
@@ -47,7 +48,7 @@ func (h *Handler) ListURL(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		params := database.ListURLsByCategoryParams{
-			CategoryID: categoryID,
+			CategoryID: &categoryID,
 			UserID:     userID,
 		}
 		urls, err = h.config.Queries.ListURLsByCategory(r.Context(), params)
@@ -129,14 +130,28 @@ func (h *Handler) CreateURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if req.CategoryID == 0 {
-		utils.WriteJSONError(w, http.StatusBadRequest, "Category ID is required")
-		return
+	// Validate category ownership if provided
+	if req.CategoryID != nil {
+		cat, err := h.config.Queries.GetCategoryByID(r.Context(), *req.CategoryID)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				utils.WriteJSONError(w, http.StatusBadRequest, "Category not found")
+				return
+			}
+			utils.WriteJSONError(w, http.StatusInternalServerError, "Unable to validate category")
+			return
+		}
+		if cat.UserID != userID {
+			utils.WriteJSONError(w, http.StatusForbidden, "Category does not belong to you")
+			return
+		}
 	}
 
 	params := database.CreateURLParams{
 		Url:         req.Url,
+		Title:       req.Title,
 		Description: req.Description,
+		IsPinned:    req.IsPinned,
 		CategoryID:  req.CategoryID,
 		UserID:      userID,
 	}
@@ -201,14 +216,28 @@ func (h *Handler) UpdateURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if req.CategoryID == 0 {
-		utils.WriteJSONError(w, http.StatusBadRequest, "Category ID is required")
-		return
+	// Validate category ownership if provided
+	if req.CategoryID != nil {
+		cat, err := h.config.Queries.GetCategoryByID(r.Context(), *req.CategoryID)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				utils.WriteJSONError(w, http.StatusBadRequest, "Category not found")
+				return
+			}
+			utils.WriteJSONError(w, http.StatusInternalServerError, "Unable to validate category")
+			return
+		}
+		if cat.UserID != userID {
+			utils.WriteJSONError(w, http.StatusForbidden, "Category does not belong to you")
+			return
+		}
 	}
 
 	params := database.UpdateURLParams{
 		Url:         req.Url,
+		Title:       req.Title,
 		Description: req.Description,
+		IsPinned:    req.IsPinned,
 		CategoryID:  req.CategoryID,
 		ID:          urlID,
 		UserID:      userID,

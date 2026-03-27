@@ -94,6 +94,7 @@ func (h *Handler) CreateCategory(w http.ResponseWriter, r *http.Request) {
 	params := database.CreateCategoryParams{
 		Name:        req.Name,
 		Description: req.Description,
+		Color:       req.Color,
 		UserID:      userID,
 	}
 
@@ -160,6 +161,7 @@ func (h *Handler) UpdateCategory(w http.ResponseWriter, r *http.Request) {
 	params := database.UpdateCategoryParams{
 		Name:        req.Name,
 		Description: req.Description,
+		Color:       req.Color,
 		ID:          categoryID,
 		UserID:      userID,
 	}

@@ -101,17 +101,17 @@ class ApiService {
     return this.request(`/category/${id}`);
   }
 
-  async createCategory(name: string, description?: string) {
+  async createCategory(name: string, description?: string, color?: string) {
     return this.request('/category', {
       method: 'POST',
-      body: JSON.stringify({ name, description }),
+      body: JSON.stringify({ name, description, color }),
     });
   }
 
-  async updateCategory(id: number, name: string, description?: string) {
+  async updateCategory(id: number, name: string, description?: string, color?: string) {
     return this.request(`/category/${id}`, {
       method: 'PUT',
-      body: JSON.stringify({ name, description }),
+      body: JSON.stringify({ name, description, color }),
     });
   }
 
@@ -133,17 +133,17 @@ class ApiService {
     return this.request(`/url/${id}`);
   }
 
-  async createURL(url: string, categoryId: number, description?: string) {
+  async createURL(url: string, title?: string, description?: string, isPinned?: boolean, categoryId?: number) {
     return this.request('/url', {
       method: 'POST',
-      body: JSON.stringify({ url, category_id: categoryId, description }),
+      body: JSON.stringify({ url, title, description, is_pinned: isPinned ?? false, category_id: categoryId ?? null }),
     });
   }
 
-  async updateURL(id: number, url: string, categoryId: number, description?: string) {
+  async updateURL(id: number, url: string, title?: string, description?: string, isPinned?: boolean, categoryId?: number) {
     return this.request(`/url/${id}`, {
       method: 'PUT',
-      body: JSON.stringify({ url, category_id: categoryId, description }),
+      body: JSON.stringify({ url, title, description, is_pinned: isPinned ?? false, category_id: categoryId ?? null }),
     });
   }
 

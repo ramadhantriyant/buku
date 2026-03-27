@@ -8,13 +8,16 @@ export interface Category {
   id: number;
   name: string;
   description?: string;
+  color?: string;
 }
 
 export interface Bookmark {
   id: number;
   url: string;
+  title?: string;
   description?: string;
-  category_id: number;
+  is_pinned: boolean;
+  category_id?: number;
   created_at: string;
 }
 

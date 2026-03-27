@@ -30,7 +30,7 @@ type CreateUserParams struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 	Name     string `json:"name"`
-	IsAdmin  int64  `json:"is_admin"`
+	IsAdmin  bool   `json:"is_admin"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {

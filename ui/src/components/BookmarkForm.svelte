@@ -11,7 +11,9 @@
   } = $props();
 
   let url = $state('');
+  let title = $state('');
   let description = $state('');
+  let isPinned = $state(false);
   let selectedCategoryId = $state('');
   let loading = $state(false);
   let error = $state('');
@@ -19,40 +21,53 @@
   $effect(() => {
     if (editingUrl) {
       url = editingUrl.url;
+      title = editingUrl.title || '';
       description = editingUrl.description || '';
-      selectedCategoryId = String(editingUrl.category_id);
+      isPinned = editingUrl.is_pinned;
+      selectedCategoryId = editingUrl.category_id ? String(editingUrl.category_id) : '';
     } else {
       url = '';
+      title = '';
       description = '';
-      selectedCategoryId = categories[0]?.id ? String(categories[0].id) : '';
+      isPinned = false;
+      selectedCategoryId = '';
     }
   });
 
   async function handleSubmit(e: SubmitEvent) {
     e.preventDefault();
-    if (!url.trim() || !selectedCategoryId) return;
+    if (!url.trim()) return;
 
     loading = true;
     error = '';
+
+    const categoryId = selectedCategoryId ? parseInt(selectedCategoryId) : undefined;
 
     try {
       if (editingUrl) {
         const updated: Bookmark = await api.updateURL(
           editingUrl.id,
           url,
-          parseInt(selectedCategoryId),
-          description || undefined
+          title || undefined,
+          description || undefined,
+          isPinned,
+          categoryId
         );
         onupdate?.(updated);
       } else {
         const created: Bookmark = await api.createURL(
           url,
-          parseInt(selectedCategoryId),
-          description || undefined
+          title || undefined,
+          description || undefined,
+          isPinned,
+          categoryId
         );
         oncreate?.(created);
         url = '';
+        title = '';
         description = '';
+        isPinned = false;
+        selectedCategoryId = '';
       }
     } catch (err: any) {
       error = err.message;
@@ -88,10 +103,10 @@
     {/if}
 
     <div class="flex flex-col lg:flex-row gap-3">
+      <!-- URL -->
       <div class="flex-1">
         <input
           type="url"
-          id="url"
           bind:value={url}
           class="input input-bordered w-full focus:input-primary"
           placeholder="https://example.com"
@@ -99,28 +114,45 @@
         />
       </div>
 
+      <!-- Title -->
       <div class="flex-1">
         <input
           type="text"
-          id="description"
+          bind:value={title}
+          class="input input-bordered w-full focus:input-primary"
+          placeholder="Title (optional)"
+        />
+      </div>
+
+      <!-- Description -->
+      <div class="flex-1">
+        <input
+          type="text"
           bind:value={description}
           class="input input-bordered w-full focus:input-primary"
           placeholder="Description (optional)"
         />
       </div>
 
+      <!-- Category (optional) -->
       <div class="lg:w-44">
         <select
-          id="category"
           bind:value={selectedCategoryId}
           class="select select-bordered w-full focus:select-primary"
-          required
         >
-          <option value="" disabled>Category</option>
+          <option value="">No category</option>
           {#each categories as category}
             <option value={category.id}>{category.name}</option>
           {/each}
         </select>
+      </div>
+
+      <!-- Pin toggle -->
+      <div class="flex items-center gap-2 shrink-0">
+        <label class="flex items-center gap-1.5 cursor-pointer select-none text-sm text-base-content/70">
+          <input type="checkbox" bind:checked={isPinned} class="checkbox checkbox-sm checkbox-primary" />
+          Pin
+        </label>
       </div>
 
       <div class="flex gap-2 shrink-0">

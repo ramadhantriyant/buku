@@ -12,6 +12,7 @@ type Category struct {
 	ID          int64      `json:"id"`
 	Name        string     `json:"name"`
 	Description *string    `json:"description"`
+	Color       *string    `json:"color"`
 	UserID      int64      `json:"user_id"`
 	CreatedAt   *time.Time `json:"created_at"`
 	UpdatedAt   *time.Time `json:"updated_at"`
@@ -22,7 +23,7 @@ type PasswordResetToken struct {
 	UserID    int64      `json:"user_id"`
 	TokenHash string     `json:"token_hash"`
 	ExpiresAt time.Time  `json:"expires_at"`
-	Used      *bool      `json:"used"`
+	Used      bool       `json:"used"`
 	CreatedAt *time.Time `json:"created_at"`
 	UpdatedAt *time.Time `json:"updated_at"`
 }
@@ -32,7 +33,7 @@ type RefreshToken struct {
 	UserID    int64      `json:"user_id"`
 	TokenHash string     `json:"token_hash"`
 	ExpiresAt time.Time  `json:"expires_at"`
-	Revoked   int64      `json:"revoked"`
+	Revoked   bool       `json:"revoked"`
 	CreatedAt *time.Time `json:"created_at"`
 	UpdatedAt *time.Time `json:"updated_at"`
 }
@@ -40,8 +41,10 @@ type RefreshToken struct {
 type Url struct {
 	ID          int64      `json:"id"`
 	Url         string     `json:"url"`
+	Title       *string    `json:"title"`
 	Description *string    `json:"description"`
-	CategoryID  int64      `json:"category_id"`
+	IsPinned    bool       `json:"is_pinned"`
+	CategoryID  *int64     `json:"category_id"`
 	UserID      int64      `json:"user_id"`
 	CreatedAt   *time.Time `json:"created_at"`
 	UpdatedAt   *time.Time `json:"updated_at"`
@@ -52,7 +55,7 @@ type User struct {
 	Username  string     `json:"username"`
 	Password  string     `json:"password"`
 	Name      string     `json:"name"`
-	IsAdmin   int64      `json:"is_admin"`
+	IsAdmin   bool       `json:"is_admin"`
 	CreatedAt *time.Time `json:"created_at"`
 	UpdatedAt *time.Time `json:"updated_at"`
 }

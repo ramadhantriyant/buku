@@ -10,22 +10,26 @@ import (
 )
 
 const createURL = `-- name: CreateURL :one
-INSERT INTO urls (url, description, category_id, user_id)
-VALUES (?, ?, ?, ?)
-RETURNING id, url, description, category_id, user_id, created_at, updated_at
+INSERT INTO urls (url, title, description, is_pinned, category_id, user_id)
+VALUES (?, ?, ?, ?, ?, ?)
+RETURNING id, url, title, description, is_pinned, category_id, user_id, created_at, updated_at
 `
 
 type CreateURLParams struct {
 	Url         string  `json:"url"`
+	Title       *string `json:"title"`
 	Description *string `json:"description"`
-	CategoryID  int64   `json:"category_id"`
+	IsPinned    bool    `json:"is_pinned"`
+	CategoryID  *int64  `json:"category_id"`
 	UserID      int64   `json:"user_id"`
 }
 
 func (q *Queries) CreateURL(ctx context.Context, arg CreateURLParams) (Url, error) {
 	row := q.db.QueryRowContext(ctx, createURL,
 		arg.Url,
+		arg.Title,
 		arg.Description,
+		arg.IsPinned,
 		arg.CategoryID,
 		arg.UserID,
 	)
@@ -33,7 +37,9 @@ func (q *Queries) CreateURL(ctx context.Context, arg CreateURLParams) (Url, erro
 	err := row.Scan(
 		&i.ID,
 		&i.Url,
+		&i.Title,
 		&i.Description,
+		&i.IsPinned,
 		&i.CategoryID,
 		&i.UserID,
 		&i.CreatedAt,
@@ -58,7 +64,7 @@ func (q *Queries) DeleteURL(ctx context.Context, arg DeleteURLParams) error {
 }
 
 const getURLByID = `-- name: GetURLByID :one
-SELECT id, url, description, category_id, user_id, created_at, updated_at FROM urls
+SELECT id, url, title, description, is_pinned, category_id, user_id, created_at, updated_at FROM urls
 WHERE id = ?
 `
 
@@ -68,7 +74,9 @@ func (q *Queries) GetURLByID(ctx context.Context, id int64) (Url, error) {
 	err := row.Scan(
 		&i.ID,
 		&i.Url,
+		&i.Title,
 		&i.Description,
+		&i.IsPinned,
 		&i.CategoryID,
 		&i.UserID,
 		&i.CreatedAt,
@@ -78,14 +86,14 @@ func (q *Queries) GetURLByID(ctx context.Context, id int64) (Url, error) {
 }
 
 const listURLsByCategory = `-- name: ListURLsByCategory :many
-SELECT id, url, description, category_id, user_id, created_at, updated_at FROM urls
+SELECT id, url, title, description, is_pinned, category_id, user_id, created_at, updated_at FROM urls
 WHERE category_id = ? AND user_id = ?
-ORDER BY created_at DESC
+ORDER BY is_pinned DESC, created_at DESC
 `
 
 type ListURLsByCategoryParams struct {
-	CategoryID int64 `json:"category_id"`
-	UserID     int64 `json:"user_id"`
+	CategoryID *int64 `json:"category_id"`
+	UserID     int64  `json:"user_id"`
 }
 
 func (q *Queries) ListURLsByCategory(ctx context.Context, arg ListURLsByCategoryParams) ([]Url, error) {
@@ -100,7 +108,9 @@ func (q *Queries) ListURLsByCategory(ctx context.Context, arg ListURLsByCategory
 		if err := rows.Scan(
 			&i.ID,
 			&i.Url,
+			&i.Title,
 			&i.Description,
+			&i.IsPinned,
 			&i.CategoryID,
 			&i.UserID,
 			&i.CreatedAt,
@@ -120,9 +130,9 @@ func (q *Queries) ListURLsByCategory(ctx context.Context, arg ListURLsByCategory
 }
 
 const listURLsByUser = `-- name: ListURLsByUser :many
-SELECT id, url, description, category_id, user_id, created_at, updated_at FROM urls
+SELECT id, url, title, description, is_pinned, category_id, user_id, created_at, updated_at FROM urls
 WHERE user_id = ?
-ORDER BY created_at DESC
+ORDER BY is_pinned DESC, created_at DESC
 `
 
 func (q *Queries) ListURLsByUser(ctx context.Context, userID int64) ([]Url, error) {
@@ -137,7 +147,9 @@ func (q *Queries) ListURLsByUser(ctx context.Context, userID int64) ([]Url, erro
 		if err := rows.Scan(
 			&i.ID,
 			&i.Url,
+			&i.Title,
 			&i.Description,
+			&i.IsPinned,
 			&i.CategoryID,
 			&i.UserID,
 			&i.CreatedAt,
@@ -157,22 +169,29 @@ func (q *Queries) ListURLsByUser(ctx context.Context, userID int64) ([]Url, erro
 }
 
 const searchURLs = `-- name: SearchURLs :many
-SELECT id, url, description, category_id, user_id, created_at, updated_at FROM urls
+SELECT id, url, title, description, is_pinned, category_id, user_id, created_at, updated_at FROM urls
 WHERE user_id = ? AND (
-    url LIKE ? OR 
+    url LIKE ? OR
+    title LIKE ? OR
     description LIKE ?
 )
-ORDER BY created_at DESC
+ORDER BY is_pinned DESC, created_at DESC
 `
 
 type SearchURLsParams struct {
 	UserID      int64   `json:"user_id"`
 	Url         string  `json:"url"`
+	Title       *string `json:"title"`
 	Description *string `json:"description"`
 }
 
 func (q *Queries) SearchURLs(ctx context.Context, arg SearchURLsParams) ([]Url, error) {
-	rows, err := q.db.QueryContext(ctx, searchURLs, arg.UserID, arg.Url, arg.Description)
+	rows, err := q.db.QueryContext(ctx, searchURLs,
+		arg.UserID,
+		arg.Url,
+		arg.Title,
+		arg.Description,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -183,7 +202,9 @@ func (q *Queries) SearchURLs(ctx context.Context, arg SearchURLsParams) ([]Url, 
 		if err := rows.Scan(
 			&i.ID,
 			&i.Url,
+			&i.Title,
 			&i.Description,
+			&i.IsPinned,
 			&i.CategoryID,
 			&i.UserID,
 			&i.CreatedAt,
@@ -204,15 +225,17 @@ func (q *Queries) SearchURLs(ctx context.Context, arg SearchURLsParams) ([]Url, 
 
 const updateURL = `-- name: UpdateURL :one
 UPDATE urls
-SET url = ?, description = ?, category_id = ?, updated_at = CURRENT_TIMESTAMP
+SET url = ?, title = ?, description = ?, is_pinned = ?, category_id = ?, updated_at = CURRENT_TIMESTAMP
 WHERE id = ? AND user_id = ?
-RETURNING id, url, description, category_id, user_id, created_at, updated_at
+RETURNING id, url, title, description, is_pinned, category_id, user_id, created_at, updated_at
 `
 
 type UpdateURLParams struct {
 	Url         string  `json:"url"`
+	Title       *string `json:"title"`
 	Description *string `json:"description"`
-	CategoryID  int64   `json:"category_id"`
+	IsPinned    bool    `json:"is_pinned"`
+	CategoryID  *int64  `json:"category_id"`
 	ID          int64   `json:"id"`
 	UserID      int64   `json:"user_id"`
 }
@@ -220,7 +243,9 @@ type UpdateURLParams struct {
 func (q *Queries) UpdateURL(ctx context.Context, arg UpdateURLParams) (Url, error) {
 	row := q.db.QueryRowContext(ctx, updateURL,
 		arg.Url,
+		arg.Title,
 		arg.Description,
+		arg.IsPinned,
 		arg.CategoryID,
 		arg.ID,
 		arg.UserID,
@@ -229,7 +254,9 @@ func (q *Queries) UpdateURL(ctx context.Context, arg UpdateURLParams) (Url, erro
 	err := row.Scan(
 		&i.ID,
 		&i.Url,
+		&i.Title,
 		&i.Description,
+		&i.IsPinned,
 		&i.CategoryID,
 		&i.UserID,
 		&i.CreatedAt,
