@@ -32,9 +32,6 @@ FROM scratch
 
 WORKDIR /app
 
-# Copy CA certificates from builder
-COPY --from=go-builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-
 # Copy binary
 COPY --from=go-builder /app/buku .
 
